@@ -4,92 +4,92 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Contador Multiteléfono</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
 <style>
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #111;
-    color: white;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-  }
-
-  .fullscreen-btn {
-    position: fixed;
-    top: 12px;
-    right: 12px;
-    z-index: 1000;
-    padding: 10px 14px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-  }
-
-  .menu {
-    display: flex;
-    gap: 16px;
-  }
-
-  button.main {
-    font-size: 22px;
-    padding: 18px 30px;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-  }
-
-  .screen {
-    display: none;
-    width: 100%;
-    height: 100vh;
-  }
-
-  .active { display: flex; }
-
-  #computerScreen {
-    background: linear-gradient(135deg, #003cff, #00aaff);
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-  }
-
-  #money {
-    font-size: 72px;
-    font-weight: bold;
-    text-shadow: 0 0 18px rgba(255,255,255,.7);
-  }
-
-  #hint {
-    margin-top: 20px;
-    font-size: 18px;
-  }
-
-  #phoneScreen {
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    background: #000;
-  }
-
-  #connectBtn, #stopBtn {
-    background: red;
-    color: white;
-    display: none;
-    width: 140px;
-    height: 140px;
-    border-radius: 50%;
-    font-weight: bold;
-  }
-
-  #phoneId {
-    position: fixed;
-    bottom: 12px;
-    font-size: 14px;
-    opacity: .8;
-  }
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#111;
+  color:white;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:100vh;
+}
+.fullscreen-btn{
+  position:fixed;
+  top:12px;
+  right:12px;
+  z-index:1000;
+  padding:10px 14px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+}
+.menu{display:flex;gap:16px}
+button.main{
+  font-size:22px;
+  padding:18px 30px;
+  border:none;
+  border-radius:12px;
+  cursor:pointer;
+}
+.screen{
+  display:none;
+  width:100%;
+  height:100vh;
+}
+.active{display:flex}
+#computerScreen{
+  background:linear-gradient(135deg,#003cff,#00aaff);
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+}
+#money{
+  font-size:72px;
+  font-weight:bold;
+  text-shadow:0 0 18px rgba(255,255,255,.7);
+}
+#hint{margin-top:20px;font-size:18px}
+#phoneScreen{
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+  background:#000;
+}
+#connectBtn,#stopBtn{
+  font-size:24px;
+  padding:18px 28px;
+  border:none;
+  cursor:pointer;
+}
+#connectBtn{
+  display:block;
+  background:white;
+  color:black;
+  border-radius:14px;
+  font-weight:bold;
+}
+#stopBtn{
+  background:red;
+  color:white;
+  display:none;
+  width:140px;
+  height:140px;
+  border-radius:50%;
+  font-weight:bold;
+}
+#phoneId{
+  position:fixed;
+  bottom:12px;
+  font-size:14px;
+  opacity:.8;
+}
 </style>
 </head>
 <body>
@@ -113,8 +113,20 @@
 </div>
 
 <script>
-const channel = new BroadcastChannel('contador_multitelefono');
-const phoneId = Math.random().toString(36).slice(2, 9);
+const firebaseConfig = {
+  apiKey: "AIzaSyCkKuc0cA-Eb_-O-YV_kyimEa8Dl_fbqbU",
+  authDomain: "contador-telefonos.firebaseapp.com",
+  databaseURL: "https://contador-telefonos-default-rtdb.firebaseio.com",
+  projectId: "contador-telefonos",
+  storageBucket: "contador-telefonos.firebasestorage.app",
+  messagingSenderId: "267651219756",
+  appId: "1:267651219756:web:10c4a474484a460f9fac89"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+const phoneId = Math.random().toString(36).slice(2,9);
 let connected = false;
 let counting = false;
 let stopped = false;
@@ -126,108 +138,116 @@ const phoneScreen = document.getElementById('phoneScreen');
 const stopBtn = document.getElementById('stopBtn');
 document.getElementById('phoneId').textContent = 'ID: ' + phoneId;
 
-function openComputer() {
-  document.getElementById('menu').style.display = 'none';
+function openComputer(){
+  document.getElementById('menu').style.display='none';
   document.getElementById('computerScreen').classList.add('active');
 }
 
-function openPhone() {
-  document.getElementById('menu').style.display = 'none';
+function openPhone(){
+  document.getElementById('menu').style.display='none';
   document.getElementById('phoneScreen').classList.add('active');
-  document.getElementById('connectBtn').style.display = 'block';
+  document.getElementById('connectBtn').style.display='block';
 }
 
-function formatMoney(n) {
+function formatMoney(n){
   return '$' + n.toLocaleString('es-MX');
 }
 
-function startCounter() {
-  if (counting) return;
+function startCounter(){
+  if(counting) return;
 
   stopped = false;
   amount = 0;
   money.textContent = '$0';
   counting = true;
 
-  channel.postMessage({ type: 'start' });
+  db.ref('contador/evento').set({
+    type:'start',
+    time:Date.now()
+  });
 
   interval = setInterval(() => {
-    amount += Math.floor(Math.random() * 1500) + 400;
+    amount += Math.floor(Math.random() * 700) + 200;
 
-    if (amount >= 1000000) {
+    if(amount >= 1000000){
       amount = 1000000;
       money.textContent = formatMoney(amount);
       clearInterval(interval);
 
       setTimeout(() => {
-        if (!stopped) {
-          channel.postMessage({ type: 'allGreen' });
+        if(!stopped){
+          db.ref('contador/evento').set({
+            type:'allGreen',
+            time:Date.now()
+          });
         }
         amount = 0;
         money.textContent = '$0';
         counting = false;
-      }, 10000);
+      },10000);
 
       return;
     }
 
     money.textContent = formatMoney(amount);
-  }, 150);
+  },180);
 }
 
 window.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && document.getElementById('computerScreen').classList.contains('active')) {
+  if(e.key === 'Enter' && document.getElementById('computerScreen').classList.contains('active')){
     startCounter();
   }
 });
 
-channel.onmessage = (event) => {
-  const msg = event.data;
+document.getElementById('connectBtn').onclick = () => {
+  connected = true;
+  document.getElementById('connectBtn').style.display='none';
+  stopBtn.style.display='block';
 
-  if (msg.type === 'start' && connected) {
+  db.ref('contador/conexion/' + phoneId).set(true);
+};
+
+stopBtn.onclick = () => {
+  if(!connected) return;
+
+  db.ref('contador/evento').set({
+    type:'stop',
+    phoneId:phoneId,
+    time:Date.now()
+  });
+};
+
+db.ref('contador/evento').on('value', snap => {
+  const msg = snap.val();
+  if(!msg) return;
+
+  if(msg.type === 'start' && connected){
     phoneScreen.style.background = '#000';
   }
 
-  if (msg.type === 'connected') {
-    // solo referencia de conexión
-  }
-
-  if (msg.type === 'stop' && counting && !stopped) {
+  if(msg.type === 'stop' && counting && !stopped){
     stopped = true;
     counting = false;
     clearInterval(interval);
-    channel.postMessage({ type: 'winner', winner: msg.phoneId });
   }
 
-  if (msg.type === 'winner') {
-    if (msg.winner === phoneId) {
+  if(msg.type === 'stop'){
+    if(msg.phoneId === phoneId){
       phoneScreen.style.background = 'green';
-    } else {
+    }else{
       phoneScreen.style.background = 'red';
     }
   }
 
-  if (msg.type === 'allGreen') {
+  if(msg.type === 'allGreen'){
     phoneScreen.style.background = 'green';
   }
-};
+});
 
-document.getElementById('connectBtn').onclick = () => {
-  connected = true;
-  document.getElementById('connectBtn').style.display = 'none';
-  stopBtn.style.display = 'block';
-  channel.postMessage({ type: 'connected', phoneId });
-};
-
-stopBtn.onclick = () => {
-  if (!connected) return;
-  channel.postMessage({ type: 'stop', phoneId });
-};
-
-function toggleFullScreen() {
-  if (!document.fullscreenElement) {
+function toggleFullScreen(){
+  if(!document.fullscreenElement){
     document.documentElement.requestFullscreen();
-  } else {
+  }else{
     document.exitFullscreen();
   }
 }
